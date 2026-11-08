@@ -8,7 +8,13 @@ A single-page app for tracking actions agreed in meetings.
 
 Data is stored in Supabase (table `public.actions`), so the whole team shares one list and changes appear live for everyone. The Supabase URL and publishable key are set at the top of the script in `index.html`. The publishable key is designed to be public; access is controlled by row-level security.
 
-> Demo setup: there is no sign-in, so anyone with the site link can add, tick and delete actions. Add Supabase Auth before using it with real data.
+## Sign-in and users
+
+- Everyone signs in with a username and password (Supabase Auth, stored in `auth.users`). Nothing is visible until you sign in.
+- Usernames map to `<username>@example.com` behind the scenes.
+- Demo accounts: `alif` (admin), `christina`, `charlene`, `jasmine`, `karen`, `leonard`, `steph`. Default password: `password`.
+- Admins see **Manage team**, where they can add users with an initial password and reset passwords. This runs through the `admin-users` Edge Function, which checks the caller is an admin.
+- Public self sign-up is blocked: only admin-created accounts are accepted.
 
 ## Deploy on Vercel
 
@@ -21,6 +27,8 @@ No build step or dependencies are needed.
 ## Database
 
 - `supabase/migrations/` creates the `actions` table, its access policies and realtime.
-- `supabase/seed.sql` loads the mock team data (Alif, Charlene, Christina, Jasmine, Karen, Leonard, Steph).
+- `supabase/seed.sql` loads the mock team actions.
+- `supabase/seed_users.sql` creates the demo team accounts.
+- `supabase/functions/admin-users/` is the Edge Function for adding users and resetting passwords (deploy with `verify_jwt` off; it checks auth itself).
 
-To set up a fresh Supabase project, run the migration and then the seed in the SQL Editor, and update `SUPABASE_URL` and `SUPABASE_KEY` in `index.html`.
+To set up a fresh Supabase project, run the migrations in order, then `seed_users.sql` and `seed.sql`, deploy the Edge Function, in the SQL Editor, and update `SUPABASE_URL` and `SUPABASE_KEY` in `index.html`.

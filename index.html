@@ -136,13 +136,99 @@
     .stat .num{font-size:1.9rem}
     .grid{grid-template-columns:1fr}
   }
+
+  /* --- Auth & team management --- */
+  [hidden]{display:none !important}
+  select{
+    width:100%;font:inherit;font-size:1rem;color:var(--ink);
+    padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:#FBFAF8;
+    outline:none;appearance:none;-webkit-appearance:none;cursor:pointer;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237A766F' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 16px center;padding-right:40px;
+  }
+  select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  input[type=password]{
+    width:100%;font:inherit;font-size:1rem;color:var(--ink);
+    padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:#FBFAF8;outline:none;
+  }
+  .login-wrap{min-height:100vh;display:grid;place-items:center;padding:24px}
+  .login{width:100%;max-width:420px;padding:36px}
+  .login h1{font-size:1.9rem;margin:0 0 4px;letter-spacing:-.02em}
+  .login p.sub{color:var(--muted);margin:0 0 28px}
+  .login .field{margin-bottom:18px}
+  .login .btn{width:100%;margin-top:8px}
+  .btn:disabled{opacity:.6;cursor:wait}
+  .err{color:var(--overdue);font-size:.92rem;min-height:1.3em;margin-top:12px}
+
+  .topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+  .userbox{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .me{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:6px 14px 6px 6px}
+  .me .avatar{width:32px;height:32px;font-size:.8rem}
+  .me .name{font-weight:700;font-size:.95rem}
+  .me .role{font-size:.75rem;color:var(--accent-ink);background:var(--accent-soft);padding:2px 8px;border-radius:99px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+  .btn-ghost{
+    background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:12px;
+    padding:10px 16px;font-size:.95rem;font-weight:500;transition:border-color .15s,color .15s;
+  }
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-ink)}
+
+  .modal-back{position:fixed;inset:0;background:rgba(43,42,40,.35);display:grid;place-items:center;padding:24px;z-index:10}
+  .modal{width:100%;max-width:640px;max-height:90vh;overflow:auto;padding:28px}
+  .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+  .modal-head h2{margin:0;font-size:1.4rem}
+  .x{background:none;border:0;font-size:1.6rem;color:var(--muted);line-height:1;padding:4px 8px;border-radius:8px}
+  .x:hover{color:var(--ink)}
+  .team-list{list-style:none;margin:0 0 24px;padding:0}
+  .team-list li{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+  .team-list li:first-child{border-top:0}
+  .team-list .uname{color:var(--muted);font-size:.88rem}
+  .team-list .reset{display:flex;gap:8px;align-items:center}
+  .team-list .reset input{padding:8px 12px;font-size:.9rem;width:150px}
+  .team-list .reset button{padding:8px 12px;font-size:.88rem}
+  .sub-h{font-size:.85rem;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.05em;margin:0 0 12px}
+  form.adduser{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  form.adduser .full{grid-column:1/-1}
+  .ok{color:#2F6B3A;font-size:.92rem;min-height:1.3em;margin-top:10px}
+  @media (max-width:760px){
+    form.adduser{grid-template-columns:1fr}
+    .team-list li{grid-template-columns:auto 1fr}
+    .team-list .reset{grid-column:1/-1}
+    .team-list .reset input{flex:1;width:auto}
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
+
+<!-- Sign-in -->
+<div class="login-wrap" id="login-view" hidden>
+  <form class="card login" id="login-form" autocomplete="on">
     <h1>Meeting actions<span class="dot"></span></h1>
-    <p>What we agreed, who owns it, and when it's due.</p>
+    <p class="sub">Sign in to see your team's actions.</p>
+    <div class="field">
+      <label for="l-user">Username</label>
+      <input type="text" id="l-user" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="e.g. alif">
+    </div>
+    <div class="field">
+      <label for="l-pass">Password</label>
+      <input type="password" id="l-pass" autocomplete="current-password">
+    </div>
+    <button class="btn" type="submit" id="l-btn">Sign in</button>
+    <div class="err" id="l-err" role="alert"></div>
+  </form>
+</div>
+
+<!-- App -->
+<div class="wrap" id="app-view" hidden>
+  <header class="topbar">
+    <div>
+      <h1>Meeting actions<span class="dot"></span></h1>
+      <p>What we agreed, who owns it, and when it's due.</p>
+    </div>
+    <div class="userbox">
+      <div class="me"><div class="avatar" id="me-avatar"></div><span class="name" id="me-name"></span><span class="role" id="me-role" hidden>Admin</span></div>
+      <button class="btn-ghost" id="team-btn" type="button" hidden>Manage team</button>
+      <button class="btn-ghost" id="signout-btn" type="button">Sign out</button>
+    </div>
   </header>
 
   <section class="stats" aria-label="Summary">
@@ -169,8 +255,7 @@
       </div>
       <div>
         <label for="f-owner">Owner</label>
-        <input type="text" id="f-owner" placeholder="Name" list="owners" maxlength="40">
-        <datalist id="owners"></datalist>
+        <select id="f-owner"></select>
       </div>
       <div>
         <label for="f-due">Due date</label>
@@ -191,19 +276,58 @@
   <p class="note" id="storage-note">Connecting…</p>
 </div>
 
+<!-- Team management (admins) -->
+<div class="modal-back" id="team-modal" hidden>
+  <div class="card modal" role="dialog" aria-modal="true" aria-labelledby="team-title">
+    <div class="modal-head">
+      <h2 id="team-title">Team</h2>
+      <button class="x" id="team-close" type="button" aria-label="Close">×</button>
+    </div>
+    <p class="sub-h">Members</p>
+    <ul class="team-list" id="team-list"></ul>
+
+    <p class="sub-h">Add a user</p>
+    <form class="adduser" id="adduser-form" autocomplete="off">
+      <div>
+        <label for="u-name">Name</label>
+        <input type="text" id="u-name" placeholder="e.g. Priya" maxlength="40">
+      </div>
+      <div>
+        <label for="u-user">Username</label>
+        <input type="text" id="u-user" placeholder="e.g. priya" maxlength="30" autocapitalize="none" spellcheck="false">
+      </div>
+      <div>
+        <label for="u-pass">Initial password</label>
+        <input type="text" id="u-pass" placeholder="At least 6 characters" autocomplete="new-password">
+      </div>
+      <div>
+        <label for="u-role">Role</label>
+        <select id="u-role"><option value="member">Member</option><option value="admin">Admin</option></select>
+      </div>
+      <button class="btn full" type="submit" id="u-btn">Add user</button>
+    </form>
+    <div class="err" id="u-err" role="alert"></div>
+    <div class="ok" id="u-ok" role="status"></div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){
   const SUPABASE_URL = 'https://gooafhhcxcohlbbwjmok.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_aZ0tqlRSwkYkNw6hBkyUjQ_8SB3ty4k'; // publishable key: safe in the browser, access is controlled by RLS
+  const EMAIL_DOMAIN = 'example.com'; // usernames map to <username>@example.com in Supabase Auth
   const PREF = 'meeting-action-tracker-hide-done';
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
   const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+  let me = null;          // current user's profile
+  let team = [];          // all profiles
   let actions = [];
   let loading = true;
   let loadError = '';
+  let channel = null;
   let hideDone = false;
   try { hideDone = localStorage.getItem(PREF) === '1'; } catch(e){}
 
@@ -211,9 +335,85 @@
   const grid = $('grid');
   const note = $('storage-note');
 
-  function setNote(msg, isError){
-    note.textContent = msg;
-    note.style.color = isError ? 'var(--overdue)' : '';
+  /* ---------- helpers ---------- */
+  function setNote(msg, isError){ note.textContent = msg; note.style.color = isError ? 'var(--overdue)' : ''; }
+  function todayISO(){
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function fmtDate(iso){ const [y,m,d] = iso.split('-').map(Number); return d + ' ' + MONTHS[m-1] + ' ' + y; }
+  function daysBetween(a,b){
+    const pa = a.split('-').map(Number), pb = b.split('-').map(Number);
+    return Math.round((Date.UTC(pb[0],pb[1]-1,pb[2]) - Date.UTC(pa[0],pa[1]-1,pa[2])) / 86400000);
+  }
+  function isOverdue(a, today){ return !a.done && a.due < today; }
+  function initials(name){ const p = name.trim().split(/\s+/); return ((p[0]||'')[0] + ((p[1]||'')[0]||'')).toUpperCase(); }
+  function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  /* ---------- auth ---------- */
+  function showLogin(){
+    $('app-view').hidden = true; $('team-modal').hidden = true; $('login-view').hidden = false;
+    $('l-pass').value = ''; $('l-user').focus();
+  }
+
+  async function showApp(session){
+    $('login-view').hidden = true;
+    const { data: profile, error } = await db.from('profiles').select('id,username,display_name,role').eq('id', session.user.id).single();
+    if(error || !profile){
+      await db.auth.signOut();
+      $('l-err').textContent = 'Your account has no profile yet. Ask an admin to check it.';
+      return;
+    }
+    me = profile;
+    $('me-name').textContent = me.display_name;
+    $('me-avatar').textContent = initials(me.display_name);
+    $('me-role').hidden = me.role !== 'admin';
+    $('team-btn').hidden = me.role !== 'admin';
+    $('app-view').hidden = false;
+    $('f-due').value = todayISO();
+    await loadTeam();
+    await fetchActions();
+    subscribe();
+  }
+
+  $('login-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const username = $('l-user').value.trim().toLowerCase();
+    const password = $('l-pass').value;
+    $('l-err').textContent = '';
+    if(!username || !password){ $('l-err').textContent = 'Please enter your username and password.'; return; }
+    $('l-btn').disabled = true; $('l-btn').textContent = 'Signing in…';
+    const email = username.includes('@') ? username : username + '@' + EMAIL_DOMAIN;
+    const { error } = await db.auth.signInWithPassword({ email, password });
+    $('l-btn').disabled = false; $('l-btn').textContent = 'Sign in';
+    if(error){
+      $('l-err').textContent = /invalid/i.test(error.message) ? 'Wrong username or password.' : error.message;
+    }
+  });
+
+  $('signout-btn').addEventListener('click', async () => { await db.auth.signOut(); });
+
+  let currentUserId = null;
+  db.auth.onAuthStateChange((event, session) => {
+    // Defer DB calls out of the auth callback to avoid deadlocks in supabase-js
+    setTimeout(() => {
+      if(session && session.user.id !== currentUserId){
+        currentUserId = session.user.id; showApp(session);
+      } else if(!session){
+        currentUserId = null; me = null; actions = []; team = [];
+        if(channel){ db.removeChannel(channel); channel = null; }
+        showLogin();
+      }
+    }, 0);
+  });
+
+  /* ---------- data ---------- */
+  async function loadTeam(){
+    const { data, error } = await db.from('profiles').select('id,username,display_name,role').order('display_name');
+    if(!error) team = data;
+    const sel = $('f-owner'), prev = sel.value;
+    sel.innerHTML = team.map(p => '<option value="'+esc(p.display_name)+'">'+esc(p.display_name)+'</option>').join('');
+    sel.value = prev && team.some(p => p.display_name === prev) ? prev : (me ? me.display_name : '');
   }
 
   async function fetchActions(){
@@ -224,27 +424,23 @@
     render();
   }
 
-  function todayISO(){
-    const d = new Date();
-    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-  }
-  function fmtDate(iso){
-    const [y,m,d] = iso.split('-').map(Number);
-    return d + ' ' + MONTHS[m-1] + ' ' + y;
-  }
-  function daysBetween(a,b){
-    const pa = a.split('-').map(Number), pb = b.split('-').map(Number);
-    return Math.round((Date.UTC(pb[0],pb[1]-1,pb[2]) - Date.UTC(pa[0],pa[1]-1,pa[2])) / 86400000);
-  }
-  function isOverdue(a, today){ return !a.done && a.due < today; }
-  function initials(name){
-    const parts = name.trim().split(/\s+/);
-    return ((parts[0]||'')[0] + ((parts[1]||'')[0]||'')).toUpperCase();
-  }
-  function esc(s){
-    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function subscribe(){
+    if(channel) db.removeChannel(channel);
+    channel = db.channel('actions-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'actions' }, payload => {
+        if(payload.eventType === 'DELETE'){ actions = actions.filter(a => a.id !== payload.old.id); }
+        else { upsertLocal(payload.new); }
+        render();
+      })
+      .subscribe();
   }
 
+  function upsertLocal(row){
+    const i = actions.findIndex(a => a.id === row.id);
+    if(i === -1) actions.push(row); else actions[i] = row;
+  }
+
+  /* ---------- render ---------- */
   function render(){
     const today = todayISO();
     const open = actions.filter(a => !a.done).length;
@@ -257,27 +453,16 @@
     $('s-overdue-card').classList.toggle('zero', overdue === 0);
     $('s-bar').style.width = actions.length ? Math.round(done/actions.length*100) + '%' : '0%';
 
-    const owners = [...new Set(actions.map(a => a.owner))].sort((a,b)=>a.localeCompare(b));
-    $('owners').innerHTML = owners.map(o => '<option value="'+esc(o)+'">').join('');
-
-    if(loading){
-      grid.innerHTML = '<div class="card empty" style="grid-column:1/-1"><strong>Loading actions…</strong></div>';
-      return;
-    }
+    if(loading){ grid.innerHTML = '<div class="card empty" style="grid-column:1/-1"><strong>Loading actions…</strong></div>'; return; }
     if(loadError && !actions.length){
-      grid.innerHTML = '<div class="card empty" style="grid-column:1/-1"><strong>Couldn\'t load actions</strong>Check your connection and refresh the page.</div>';
-      return;
+      grid.innerHTML = '<div class="card empty" style="grid-column:1/-1"><strong>Couldn\'t load actions</strong>Check your connection and refresh the page.</div>'; return;
     }
     if(!actions.length){
-      grid.innerHTML = '<div class="card empty" style="grid-column:1/-1"><strong>No actions yet</strong>Add the first one agreed in your meeting above.</div>';
-      return;
+      grid.innerHTML = '<div class="card empty" style="grid-column:1/-1"><strong>No actions yet</strong>Add the first one agreed in your meeting above.</div>'; return;
     }
 
     const groups = {};
-    actions.forEach(a => {
-      const k = a.owner.toLowerCase();
-      (groups[k] = groups[k] || {name:a.owner, items:[]}).items.push(a);
-    });
+    actions.forEach(a => { const k = a.owner.toLowerCase(); (groups[k] = groups[k] || {name:a.owner, items:[]}).items.push(a); });
 
     const list = Object.values(groups).map(g => {
       g.overdue = g.items.filter(a => isOverdue(a, today)).length;
@@ -290,8 +475,9 @@
     list.forEach(g => {
       const visible = hideDone ? g.items.filter(a => !a.done) : g.items;
       if(hideDone && !visible.length) return;
+      const isMe = me && g.name === me.display_name;
       html += '<article class="card">';
-      html += '<div class="owner-head"><div class="owner"><div class="avatar">'+esc(initials(g.name))+'</div><div style="min-width:0"><div class="owner-name">'+esc(g.name)+'</div><div class="owner-count">'+g.open+' open · '+(g.items.length-g.open)+' done</div></div></div>';
+      html += '<div class="owner-head"><div class="owner"><div class="avatar">'+esc(initials(g.name))+'</div><div style="min-width:0"><div class="owner-name">'+esc(g.name)+(isMe?' <span style="color:var(--muted);font-weight:500">(you)</span>':'')+'</div><div class="owner-count">'+g.open+' open · '+(g.items.length-g.open)+' done</div></div></div>';
       if(g.overdue) html += '<span class="pill-overdue">'+g.overdue+' overdue</span>';
       html += '</div><ul class="items">';
       visible.forEach(a => {
@@ -309,36 +495,24 @@
       html += '</ul></article>';
     });
 
-    if(!html){
-      html = '<div class="card empty" style="grid-column:1/-1"><strong>All done</strong>Every action is ticked off. Untick "Hide done actions" to see them.</div>';
-    }
+    if(!html) html = '<div class="card empty" style="grid-column:1/-1"><strong>All done</strong>Every action is ticked off. Untick "Hide done actions" to see them.</div>';
     grid.innerHTML = html;
   }
 
-  function upsertLocal(row){
-    const i = actions.findIndex(a => a.id === row.id);
-    if(i === -1) actions.push(row); else actions[i] = row;
-  }
-
+  /* ---------- actions ---------- */
   $('add-form').addEventListener('submit', async e => {
     e.preventDefault();
     const text = $('f-text').value.trim();
-    const owner = $('f-owner').value.trim().replace(/\s+/g,' ');
+    const owner = $('f-owner').value;
     const due = $('f-due').value;
     const missing = [];
     if(!text) missing.push('an action');
     if(!owner) missing.push('an owner');
     if(!due) missing.push('a due date');
-    if(missing.length){
-      $('form-msg').textContent = 'Please add ' + missing.join(', ').replace(/, ([^,]*)$/, ' and $1') + '.';
-      return;
-    }
-    const existing = actions.find(a => a.owner.toLowerCase() === owner.toLowerCase());
-    const btn = e.submitter || document.querySelector('#add-form .btn');
+    if(missing.length){ $('form-msg').textContent = 'Please add ' + missing.join(', ').replace(/, ([^,]*)$/, ' and $1') + '.'; return; }
+    const btn = document.querySelector('#add-form .btn');
     btn.disabled = true;
-    const { data, error } = await db.from('actions')
-      .insert({ text, owner: existing ? existing.owner : owner, due })
-      .select().single();
+    const { data, error } = await db.from('actions').insert({ text, owner, due }).select().single();
     btn.disabled = false;
     if(error){ $('form-msg').textContent = 'Could not save: ' + error.message; return; }
     upsertLocal(data);
@@ -354,8 +528,7 @@
     const a = actions.find(x => x.id === id);
     if(!a) return;
     const prev = a.done;
-    a.done = e.target.checked;           // optimistic
-    render();
+    a.done = e.target.checked; render();
     const { error } = await db.from('actions').update({ done: a.done }).eq('id', id);
     if(error){ a.done = prev; render(); setNote('Could not update: ' + error.message, true); }
   });
@@ -364,8 +537,7 @@
     const id = e.target.dataset.del;
     if(!id) return;
     const backup = actions.slice();
-    actions = actions.filter(x => x.id !== id);   // optimistic
-    render();
+    actions = actions.filter(x => x.id !== id); render();
     const { error } = await db.from('actions').delete().eq('id', id);
     if(error){ actions = backup; render(); setNote('Could not delete: ' + error.message, true); }
   });
@@ -378,22 +550,81 @@
     render();
   });
 
-  // Live updates from teammates
-  db.channel('actions-live')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'actions' }, payload => {
-      if(payload.eventType === 'DELETE'){ actions = actions.filter(a => a.id !== payload.old.id); }
-      else { upsertLocal(payload.new); }
-      render();
-    })
-    .subscribe();
+  /* ---------- team management (admin) ---------- */
+  async function callAdmin(body){
+    const { data, error } = await db.functions.invoke('admin-users', { body });
+    if(error){
+      let msg = error.message;
+      try { const j = await error.context.json(); if(j && j.error) msg = j.error; } catch(_){}
+      throw new Error(msg);
+    }
+    return data;
+  }
 
-  // Re-sync when the tab regains focus, in case realtime missed anything
-  document.addEventListener('visibilitychange', () => { if(!document.hidden) fetchActions(); });
+  function renderTeam(){
+    $('team-list').innerHTML = team.map(p =>
+      '<li><div class="avatar">'+esc(initials(p.display_name))+'</div>'
+      + '<div><div style="font-weight:700">'+esc(p.display_name)+(p.role==='admin'?' <span class="tag today" style="margin-left:4px">Admin</span>':'')+'</div><div class="uname">@'+esc(p.username)+'</div></div>'
+      + '<form class="reset" data-uid="'+p.id+'"><input type="text" placeholder="New password" autocomplete="new-password" aria-label="New password for '+esc(p.display_name)+'"><button class="btn-ghost" type="submit">Reset</button></form>'
+      + '</li>').join('');
+  }
 
-  $('f-due').value = todayISO();
-  render();
-  fetchActions();
-  setInterval(render, 60000);
+  $('team-btn').addEventListener('click', async () => {
+    $('u-err').textContent = ''; $('u-ok').textContent = '';
+    await loadTeam(); renderTeam();
+    $('team-modal').hidden = false; $('u-name').focus();
+  });
+  $('team-close').addEventListener('click', () => { $('team-modal').hidden = true; });
+  $('team-modal').addEventListener('click', e => { if(e.target.id === 'team-modal') $('team-modal').hidden = true; });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') $('team-modal').hidden = true; });
+
+  // Suggest a username from the name
+  $('u-name').addEventListener('input', () => {
+    const u = $('u-user');
+    if(!u.dataset.touched) u.value = $('u-name').value.trim().toLowerCase().replace(/\s+/g,'.').replace(/[^a-z0-9._-]/g,'');
+  });
+  $('u-user').addEventListener('input', () => { $('u-user').dataset.touched = '1'; });
+
+  $('adduser-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    $('u-err').textContent = ''; $('u-ok').textContent = '';
+    const display_name = $('u-name').value.trim();
+    const username = $('u-user').value.trim().toLowerCase();
+    const password = $('u-pass').value;
+    const role = $('u-role').value;
+    const missing = [];
+    if(!display_name) missing.push('a name');
+    if(!username) missing.push('a username');
+    if(!password) missing.push('an initial password');
+    if(missing.length){ $('u-err').textContent = 'Please add ' + missing.join(', ').replace(/, ([^,]*)$/, ' and $1') + '.'; return; }
+    $('u-btn').disabled = true; $('u-btn').textContent = 'Adding…';
+    try {
+      await callAdmin({ action: 'create', display_name, username, password, role });
+      $('u-ok').textContent = display_name + ' can now sign in as "' + username + '" with the password you set.';
+      $('adduser-form').reset(); delete $('u-user').dataset.touched;
+      await loadTeam(); renderTeam();
+    } catch(err){ $('u-err').textContent = err.message; }
+    $('u-btn').disabled = false; $('u-btn').textContent = 'Add user';
+  });
+
+  $('team-list').addEventListener('submit', async e => {
+    e.preventDefault();
+    const form = e.target, input = form.querySelector('input'), btn = form.querySelector('button');
+    const p = team.find(t => t.id === form.dataset.uid);
+    $('u-err').textContent = ''; $('u-ok').textContent = '';
+    if(!input.value){ $('u-err').textContent = 'Type a new password for ' + p.display_name + ' first.'; return; }
+    btn.disabled = true;
+    try {
+      await callAdmin({ action: 'reset_password', user_id: p.id, password: input.value });
+      $('u-ok').textContent = p.display_name + "'s password has been reset.";
+      input.value = '';
+    } catch(err){ $('u-err').textContent = err.message; }
+    btn.disabled = false;
+  });
+
+  /* ---------- misc ---------- */
+  document.addEventListener('visibilitychange', () => { if(!document.hidden && me) fetchActions(); });
+  setInterval(() => { if(me) render(); }, 60000);
 })();
 </script>
 </body>
