@@ -17,3 +17,10 @@ Data is stored in Supabase (table `public.actions`), so the whole team shares on
 3. Deploy. `index.html` is served at the root.
 
 No build step or dependencies are needed.
+
+## Database
+
+- `supabase/migrations/` creates the `actions` table, its access policies and realtime.
+- `supabase/seed.sql` loads the mock team data (Alif, Charlene, Christina, Jasmine, Karen, Leonard, Steph).
+
+To set up a fresh Supabase project, run the migration and then the seed in the SQL Editor, and update `SUPABASE_URL` and `SUPABASE_KEY` in `index.html`.
