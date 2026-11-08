@@ -6,7 +6,9 @@ A single-page app for tracking actions agreed in meetings.
 - Actions grouped by owner, with a tick box for done
 - Open, done and overdue counts; overdue actions highlighted in red
 
-Data is saved in the browser's local storage, so each browser keeps its own list.
+Data is stored in Supabase (table `public.actions`), so the whole team shares one list and changes appear live for everyone. The Supabase URL and publishable key are set at the top of the script in `index.html`. The publishable key is designed to be public; access is controlled by row-level security.
+
+> Demo setup: there is no sign-in, so anyone with the site link can add, tick and delete actions. Add Supabase Auth before using it with real data.
 
 ## Deploy on Vercel
 

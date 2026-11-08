@@ -188,35 +188,41 @@
 
   <section class="grid" id="grid" aria-live="polite"></section>
 
-  <p class="note" id="storage-note">Saved in this browser only.</p>
+  <p class="note" id="storage-note">Connecting…</p>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){
-  const KEY = 'meeting-action-tracker-v1';
+  const SUPABASE_URL = 'https://gooafhhcxcohlbbwjmok.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_aZ0tqlRSwkYkNw6hBkyUjQ_8SB3ty4k'; // publishable key: safe in the browser, access is controlled by RLS
   const PREF = 'meeting-action-tracker-hide-done';
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-  let storageOK = true;
-  function load(){
-    try { return JSON.parse(localStorage.getItem(KEY)) || []; }
-    catch(e){ storageOK = false; return []; }
-  }
-  function save(){
-    try { localStorage.setItem(KEY, JSON.stringify(actions)); }
-    catch(e){ storageOK = false; showStorageNote(); }
-  }
-  function showStorageNote(){
-    if(!storageOK) document.getElementById('storage-note').textContent =
-      'Browser storage is unavailable here, so actions will be lost when you close this page.';
-  }
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  let actions = load();
+  let actions = [];
+  let loading = true;
+  let loadError = '';
   let hideDone = false;
   try { hideDone = localStorage.getItem(PREF) === '1'; } catch(e){}
 
   const $ = id => document.getElementById(id);
   const grid = $('grid');
+  const note = $('storage-note');
+
+  function setNote(msg, isError){
+    note.textContent = msg;
+    note.style.color = isError ? 'var(--overdue)' : '';
+  }
+
+  async function fetchActions(){
+    const { data, error } = await db.from('actions').select('id,text,owner,due,done,created_at').order('due');
+    loading = false;
+    if(error){ loadError = error.message; setNote('Could not load actions: ' + error.message, true); }
+    else { loadError = ''; actions = data; setNote('Synced with the team. Changes appear for everyone in real time.'); }
+    render();
+  }
 
   function todayISO(){
     const d = new Date();
@@ -236,9 +242,8 @@
     return ((parts[0]||'')[0] + ((parts[1]||'')[0]||'')).toUpperCase();
   }
   function esc(s){
-    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
-  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 
   function render(){
     const today = todayISO();
@@ -252,16 +257,22 @@
     $('s-overdue-card').classList.toggle('zero', overdue === 0);
     $('s-bar').style.width = actions.length ? Math.round(done/actions.length*100) + '%' : '0%';
 
-    // owner suggestions
     const owners = [...new Set(actions.map(a => a.owner))].sort((a,b)=>a.localeCompare(b));
     $('owners').innerHTML = owners.map(o => '<option value="'+esc(o)+'">').join('');
 
+    if(loading){
+      grid.innerHTML = '<div class="card empty" style="grid-column:1/-1"><strong>Loading actions…</strong></div>';
+      return;
+    }
+    if(loadError && !actions.length){
+      grid.innerHTML = '<div class="card empty" style="grid-column:1/-1"><strong>Couldn\'t load actions</strong>Check your connection and refresh the page.</div>';
+      return;
+    }
     if(!actions.length){
       grid.innerHTML = '<div class="card empty" style="grid-column:1/-1"><strong>No actions yet</strong>Add the first one agreed in your meeting above.</div>';
       return;
     }
 
-    // group by owner (case-insensitive)
     const groups = {};
     actions.forEach(a => {
       const k = a.owner.toLowerCase();
@@ -304,7 +315,12 @@
     grid.innerHTML = html;
   }
 
-  $('add-form').addEventListener('submit', e => {
+  function upsertLocal(row){
+    const i = actions.findIndex(a => a.id === row.id);
+    if(i === -1) actions.push(row); else actions[i] = row;
+  }
+
+  $('add-form').addEventListener('submit', async e => {
     e.preventDefault();
     const text = $('f-text').value.trim();
     const owner = $('f-owner').value.trim().replace(/\s+/g,' ');
@@ -317,28 +333,41 @@
       $('form-msg').textContent = 'Please add ' + missing.join(', ').replace(/, ([^,]*)$/, ' and $1') + '.';
       return;
     }
-    // reuse existing capitalisation of owner name
     const existing = actions.find(a => a.owner.toLowerCase() === owner.toLowerCase());
-    actions.push({id:uid(), text, owner: existing ? existing.owner : owner, due, done:false, created:Date.now()});
-    save();
+    const btn = e.submitter || document.querySelector('#add-form .btn');
+    btn.disabled = true;
+    const { data, error } = await db.from('actions')
+      .insert({ text, owner: existing ? existing.owner : owner, due })
+      .select().single();
+    btn.disabled = false;
+    if(error){ $('form-msg').textContent = 'Could not save: ' + error.message; return; }
+    upsertLocal(data);
     $('form-msg').textContent = '';
     $('f-text').value = '';
     $('f-text').focus();
     render();
   });
 
-  grid.addEventListener('change', e => {
+  grid.addEventListener('change', async e => {
     const id = e.target.dataset.id;
     if(!id) return;
     const a = actions.find(x => x.id === id);
-    if(a){ a.done = e.target.checked; save(); render(); }
+    if(!a) return;
+    const prev = a.done;
+    a.done = e.target.checked;           // optimistic
+    render();
+    const { error } = await db.from('actions').update({ done: a.done }).eq('id', id);
+    if(error){ a.done = prev; render(); setNote('Could not update: ' + error.message, true); }
   });
 
-  grid.addEventListener('click', e => {
+  grid.addEventListener('click', async e => {
     const id = e.target.dataset.del;
     if(!id) return;
-    actions = actions.filter(x => x.id !== id);
-    save(); render();
+    const backup = actions.slice();
+    actions = actions.filter(x => x.id !== id);   // optimistic
+    render();
+    const { error } = await db.from('actions').delete().eq('id', id);
+    if(error){ actions = backup; render(); setNote('Could not delete: ' + error.message, true); }
   });
 
   const hd = $('hide-done');
@@ -349,10 +378,21 @@
     render();
   });
 
+  // Live updates from teammates
+  db.channel('actions-live')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'actions' }, payload => {
+      if(payload.eventType === 'DELETE'){ actions = actions.filter(a => a.id !== payload.old.id); }
+      else { upsertLocal(payload.new); }
+      render();
+    })
+    .subscribe();
+
+  // Re-sync when the tab regains focus, in case realtime missed anything
+  document.addEventListener('visibilitychange', () => { if(!document.hidden) fetchActions(); });
+
   $('f-due').value = todayISO();
-  showStorageNote();
   render();
-  // refresh overdue status if the page is left open past midnight
+  fetchActions();
   setInterval(render, 60000);
 })();
 </script>
