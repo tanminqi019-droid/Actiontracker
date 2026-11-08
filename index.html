@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meeting Action Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4F2EE;
+    --card:#FFFFFF;
+    --ink:#2B2A28;
+    --muted:#7A766F;
+    --line:#E4E0D8;
+    --soft:#ECE9E3;
+    --accent:#E8742C;
+    --accent-ink:#B9541A;
+    --accent-soft:#FCEBDD;
+    --overdue:#B3261E;
+    --overdue-soft:#FBE7E5;
+    --radius:16px;
+  }
+  *{box-sizing:border-box}
+  html{font-size:18px}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+    line-height:1.45;-webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:48px 24px 80px}
+  header h1{font-size:2.1rem;font-weight:700;margin:0;letter-spacing:-.02em}
+  header p{color:var(--muted);margin:6px 0 0;font-size:1.05rem}
+  .dot{display:inline-block;width:.55em;height:.55em;border-radius:50%;background:var(--accent);margin-left:.12em;vertical-align:baseline}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px}
+
+  /* Stats */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:32px 0 24px}
+  .stat{padding:20px 24px}
+  .stat .num{font-size:2.4rem;font-weight:700;line-height:1;letter-spacing:-.02em}
+  .stat .lbl{color:var(--muted);margin-top:8px;font-size:.95rem;text-transform:uppercase;letter-spacing:.06em;font-weight:500}
+  .stat.open .num{color:var(--accent-ink)}
+  .stat.overdue .num{color:var(--overdue)}
+  .stat.overdue.zero .num{color:var(--muted)}
+  .bar{height:8px;background:var(--soft);border-radius:99px;margin-top:14px;overflow:hidden}
+  .bar span{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .3s}
+
+  /* Form */
+  form.add{display:grid;grid-template-columns:2.2fr 1fr 1fr auto;gap:12px;align-items:end}
+  label{display:block;font-size:.85rem;color:var(--muted);font-weight:500;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+  input[type=text],input[type=date]{
+    width:100%;font:inherit;font-size:1rem;color:var(--ink);
+    padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:#FBFAF8;
+    outline:none;transition:border-color .15s, box-shadow .15s;
+  }
+  input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  button{font:inherit;cursor:pointer}
+  .btn{
+    background:var(--accent);color:#fff;border:0;border-radius:12px;
+    padding:14px 24px;font-size:1rem;font-weight:700;white-space:nowrap;
+    transition:background .15s, transform .05s;
+  }
+  .btn:hover{background:var(--accent-ink)}
+  .btn:active{transform:translateY(1px)}
+  .form-msg{color:var(--overdue);font-size:.9rem;margin-top:10px;min-height:1.2em}
+
+  /* Toolbar */
+  .toolbar{display:flex;justify-content:space-between;align-items:center;margin:36px 0 16px;gap:12px;flex-wrap:wrap}
+  .toolbar h2{margin:0;font-size:1.35rem;letter-spacing:-.01em}
+  .toggle{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.95rem;cursor:pointer;user-select:none}
+  .toggle input{width:20px;height:20px;accent-color:var(--accent);cursor:pointer}
+
+  /* Owner cards */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;align-items:start}
+  .owner-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px}
+  .owner{display:flex;align-items:center;gap:12px;min-width:0}
+  .avatar{
+    width:40px;height:40px;border-radius:50%;background:var(--soft);color:var(--ink);
+    display:grid;place-items:center;font-weight:700;font-size:.95rem;flex:none;
+  }
+  .owner-name{font-weight:700;font-size:1.15rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .owner-count{color:var(--muted);font-size:.9rem}
+  .pill-overdue{background:var(--overdue-soft);color:var(--overdue);font-size:.8rem;font-weight:700;padding:4px 10px;border-radius:99px;white-space:nowrap}
+
+  ul.items{list-style:none;margin:0;padding:0}
+  li.item{
+    display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:start;
+    padding:14px 12px;margin:0 -12px;border-radius:12px;border-top:1px solid var(--line);
+  }
+  li.item:first-child{border-top:0}
+  li.item.is-overdue{background:var(--overdue-soft);border-top-color:transparent}
+  li.item.is-overdue + li.item{border-top-color:transparent}
+  .check{
+    appearance:none;-webkit-appearance:none;width:26px;height:26px;margin:2px 0 0;
+    border:2px solid #C9C4BA;border-radius:8px;background:#fff;cursor:pointer;
+    display:grid;place-items:center;transition:all .15s;flex:none;
+  }
+  .check:hover{border-color:var(--accent)}
+  .check:checked{background:var(--accent);border-color:var(--accent)}
+  .check:checked::after{
+    content:"";width:7px;height:13px;border:solid #fff;border-width:0 3px 3px 0;transform:rotate(45deg) translate(-1px,-1px);
+  }
+  .check:focus-visible{outline:3px solid var(--accent-soft);outline-offset:2px}
+  .text{font-size:1.05rem;word-break:break-word}
+  .due{font-size:.9rem;color:var(--muted);margin-top:4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .is-overdue .text{color:var(--overdue);font-weight:500}
+  .is-overdue .due{color:var(--overdue);font-weight:700}
+  .tag{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;font-weight:700;padding:2px 8px;border-radius:6px}
+  .tag.overdue{background:var(--overdue);color:#fff}
+  .tag.today{background:var(--accent-soft);color:var(--accent-ink)}
+  .is-done .text{text-decoration:line-through;color:var(--muted)}
+  .is-done .due{opacity:.7}
+  .del{
+    background:none;border:0;color:#B5B0A6;font-size:1.4rem;line-height:1;padding:2px 6px;border-radius:8px;
+    opacity:0;transition:opacity .15s,color .15s;
+  }
+  li.item:hover .del, .del:focus-visible{opacity:1}
+  .del:hover{color:var(--overdue)}
+  @media (hover:none){.del{opacity:1}}
+
+  .empty{text-align:center;padding:56px 24px;color:var(--muted)}
+  .empty strong{display:block;color:var(--ink);font-size:1.2rem;margin-bottom:6px}
+
+  .note{color:var(--muted);font-size:.85rem;text-align:center;margin-top:40px}
+
+  @media (max-width:760px){
+    html{font-size:17px}
+    .wrap{padding:32px 16px 64px}
+    form.add{grid-template-columns:1fr 1fr}
+    form.add .f-text{grid-column:1/-1}
+    form.add .btn{grid-column:1/-1}
+    .stats{gap:10px}
+    .stat{padding:16px}
+    .stat .num{font-size:1.9rem}
+    .grid{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Meeting actions<span class="dot"></span></h1>
+    <p>What we agreed, who owns it, and when it's due.</p>
+  </header>
+
+  <section class="stats" aria-label="Summary">
+    <div class="card stat open">
+      <div class="num" id="s-open">0</div>
+      <div class="lbl">Open</div>
+    </div>
+    <div class="card stat done">
+      <div class="num" id="s-done">0</div>
+      <div class="lbl">Done</div>
+      <div class="bar" aria-hidden="true"><span id="s-bar" style="width:0%"></span></div>
+    </div>
+    <div class="card stat overdue" id="s-overdue-card">
+      <div class="num" id="s-overdue">0</div>
+      <div class="lbl">Overdue</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <form class="add" id="add-form" autocomplete="off">
+      <div class="f-text">
+        <label for="f-text">Action</label>
+        <input type="text" id="f-text" placeholder="e.g. Send revised rota to store managers" maxlength="200">
+      </div>
+      <div>
+        <label for="f-owner">Owner</label>
+        <input type="text" id="f-owner" placeholder="Name" list="owners" maxlength="40">
+        <datalist id="owners"></datalist>
+      </div>
+      <div>
+        <label for="f-due">Due date</label>
+        <input type="date" id="f-due">
+      </div>
+      <button class="btn" type="submit">Add action</button>
+    </form>
+    <div class="form-msg" id="form-msg" role="status"></div>
+  </section>
+
+  <div class="toolbar">
+    <h2>By owner</h2>
+    <label class="toggle"><input type="checkbox" id="hide-done"> Hide done actions</label>
+  </div>
+
+  <section class="grid" id="grid" aria-live="polite"></section>
+
+  <p class="note" id="storage-note">Saved in this browser only.</p>
+</div>
+
+<script>
+(function(){
+  const KEY = 'meeting-action-tracker-v1';
+  const PREF = 'meeting-action-tracker-hide-done';
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  let storageOK = true;
+  function load(){
+    try { return JSON.parse(localStorage.getItem(KEY)) || []; }
+    catch(e){ storageOK = false; return []; }
+  }
+  function save(){
+    try { localStorage.setItem(KEY, JSON.stringify(actions)); }
+    catch(e){ storageOK = false; showStorageNote(); }
+  }
+  function showStorageNote(){
+    if(!storageOK) document.getElementById('storage-note').textContent =
+      'Browser storage is unavailable here, so actions will be lost when you close this page.';
+  }
+
+  let actions = load();
+  let hideDone = false;
+  try { hideDone = localStorage.getItem(PREF) === '1'; } catch(e){}
+
+  const $ = id => document.getElementById(id);
+  const grid = $('grid');
+
+  function todayISO(){
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function fmtDate(iso){
+    const [y,m,d] = iso.split('-').map(Number);
+    return d + ' ' + MONTHS[m-1] + ' ' + y;
+  }
+  function daysBetween(a,b){
+    const pa = a.split('-').map(Number), pb = b.split('-').map(Number);
+    return Math.round((Date.UTC(pb[0],pb[1]-1,pb[2]) - Date.UTC(pa[0],pa[1]-1,pa[2])) / 86400000);
+  }
+  function isOverdue(a, today){ return !a.done && a.due < today; }
+  function initials(name){
+    const parts = name.trim().split(/\s+/);
+    return ((parts[0]||'')[0] + ((parts[1]||'')[0]||'')).toUpperCase();
+  }
+  function esc(s){
+    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+  function render(){
+    const today = todayISO();
+    const open = actions.filter(a => !a.done).length;
+    const done = actions.length - open;
+    const overdue = actions.filter(a => isOverdue(a, today)).length;
+
+    $('s-open').textContent = open;
+    $('s-done').textContent = done;
+    $('s-overdue').textContent = overdue;
+    $('s-overdue-card').classList.toggle('zero', overdue === 0);
+    $('s-bar').style.width = actions.length ? Math.round(done/actions.length*100) + '%' : '0%';
+
+    // owner suggestions
+    const owners = [...new Set(actions.map(a => a.owner))].sort((a,b)=>a.localeCompare(b));
+    $('owners').innerHTML = owners.map(o => '<option value="'+esc(o)+'">').join('');
+
+    if(!actions.length){
+      grid.innerHTML = '<div class="card empty" style="grid-column:1/-1"><strong>No actions yet</strong>Add the first one agreed in your meeting above.</div>';
+      return;
+    }
+
+    // group by owner (case-insensitive)
+    const groups = {};
+    actions.forEach(a => {
+      const k = a.owner.toLowerCase();
+      (groups[k] = groups[k] || {name:a.owner, items:[]}).items.push(a);
+    });
+
+    const list = Object.values(groups).map(g => {
+      g.overdue = g.items.filter(a => isOverdue(a, today)).length;
+      g.open = g.items.filter(a => !a.done).length;
+      g.items.sort((x,y) => (x.done - y.done) || x.due.localeCompare(y.due));
+      return g;
+    }).sort((a,b) => (b.overdue - a.overdue) || (b.open - a.open) || a.name.localeCompare(b.name));
+
+    let html = '';
+    list.forEach(g => {
+      const visible = hideDone ? g.items.filter(a => !a.done) : g.items;
+      if(hideDone && !visible.length) return;
+      html += '<article class="card">';
+      html += '<div class="owner-head"><div class="owner"><div class="avatar">'+esc(initials(g.name))+'</div><div style="min-width:0"><div class="owner-name">'+esc(g.name)+'</div><div class="owner-count">'+g.open+' open · '+(g.items.length-g.open)+' done</div></div></div>';
+      if(g.overdue) html += '<span class="pill-overdue">'+g.overdue+' overdue</span>';
+      html += '</div><ul class="items">';
+      visible.forEach(a => {
+        const od = isOverdue(a, today);
+        const diff = daysBetween(today, a.due);
+        let tag = '';
+        if(od) tag = '<span class="tag overdue">'+(-diff)+' day'+(diff===-1?'':'s')+' overdue</span>';
+        else if(!a.done && diff === 0) tag = '<span class="tag today">Due today</span>';
+        html += '<li class="item'+(od?' is-overdue':'')+(a.done?' is-done':'')+'">'
+          + '<input type="checkbox" class="check" data-id="'+a.id+'" '+(a.done?'checked':'')+' aria-label="Mark done: '+esc(a.text)+'">'
+          + '<div><div class="text">'+esc(a.text)+'</div><div class="due">Due '+fmtDate(a.due)+' '+tag+'</div></div>'
+          + '<button class="del" data-del="'+a.id+'" aria-label="Delete action" title="Delete">×</button>'
+          + '</li>';
+      });
+      html += '</ul></article>';
+    });
+
+    if(!html){
+      html = '<div class="card empty" style="grid-column:1/-1"><strong>All done</strong>Every action is ticked off. Untick "Hide done actions" to see them.</div>';
+    }
+    grid.innerHTML = html;
+  }
+
+  $('add-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const text = $('f-text').value.trim();
+    const owner = $('f-owner').value.trim().replace(/\s+/g,' ');
+    const due = $('f-due').value;
+    const missing = [];
+    if(!text) missing.push('an action');
+    if(!owner) missing.push('an owner');
+    if(!due) missing.push('a due date');
+    if(missing.length){
+      $('form-msg').textContent = 'Please add ' + missing.join(', ').replace(/, ([^,]*)$/, ' and $1') + '.';
+      return;
+    }
+    // reuse existing capitalisation of owner name
+    const existing = actions.find(a => a.owner.toLowerCase() === owner.toLowerCase());
+    actions.push({id:uid(), text, owner: existing ? existing.owner : owner, due, done:false, created:Date.now()});
+    save();
+    $('form-msg').textContent = '';
+    $('f-text').value = '';
+    $('f-text').focus();
+    render();
+  });
+
+  grid.addEventListener('change', e => {
+    const id = e.target.dataset.id;
+    if(!id) return;
+    const a = actions.find(x => x.id === id);
+    if(a){ a.done = e.target.checked; save(); render(); }
+  });
+
+  grid.addEventListener('click', e => {
+    const id = e.target.dataset.del;
+    if(!id) return;
+    actions = actions.filter(x => x.id !== id);
+    save(); render();
+  });
+
+  const hd = $('hide-done');
+  hd.checked = hideDone;
+  hd.addEventListener('change', () => {
+    hideDone = hd.checked;
+    try { localStorage.setItem(PREF, hideDone ? '1' : '0'); } catch(e){}
+    render();
+  });
+
+  $('f-due').value = todayISO();
+  showStorageNote();
+  render();
+  // refresh overdue status if the page is left open past midnight
+  setInterval(render, 60000);
+})();
+</script>
+</body>
+</html>
